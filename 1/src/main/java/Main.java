@@ -1,3 +1,5 @@
+import java.util.Scanner;
+
 import org.apache.spark.SparkConf;
 import org.apache.spark.SparkFiles;
 import org.apache.spark.api.java.JavaPairRDD;
@@ -6,47 +8,104 @@ import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.PairFunction;
 import scala.Tuple2;
 
-public class Main {
-	public static void main(String[] args) {
-	SparkConf sparkConf = new SparkConf().setMaster("local").setAppName("EP2");
-	JavaSparkContext sparkContext = new JavaSparkContext(sparkConf);
-	String dataSource = "https://s3.amazonaws.com/aws-gsod/1937/289010-99999.csv";
-	sparkContext.addFile(dataSource);
-	String fileName = SparkFiles.get("289010-99999.csv");
-	JavaRDD<String> rdd = sparkContext.textFile(fileName);
-	JavaRDD<String> rdd2 = rdd.mapPartitionsWithIndex((idx, iter) ->{
-		if(idx == 0)
-			iter.next();
-		else
-			return iter;
-		return iter;
-	},true );
-	JavaPairRDD<String, Float> pairRDD = rdd2.mapToPair(i -> {
-		String[] cols = i.split(",");
-		return new Tuple2<String,Float>(cols[0],Float.parseFloat(cols[11]));
-	}) ;
-	JavaPairRDD<String, Tuple2<Float, Float>> valueCount = pairRDD.mapValues(value -> new Tuple2<Float, Float>(value,(float) 1));
-    //add values by reduceByKey
-    JavaPairRDD<String, Tuple2<Float, Float>> reducedCount = valueCount.reduceByKey((tuple1,tuple2) ->  new Tuple2<Float, Float>(tuple1._1 + tuple2._1, tuple1._2 + tuple2._2));
-    //calculate average
-    JavaPairRDD<String, Float> averagePair = reducedCount.mapToPair(getAverageByKey);
-    //print averageByKey
-    averagePair.foreach(data -> {
-        System.out.println("Key="+data._1() + " Average=" + data._2());
-    });
 
-		    //stop sc
-	sparkContext.stop();
-	sparkContext.close();
-}
+public class Main {
 	
-	private static PairFunction<Tuple2<String, Tuple2<Float, Float>>,String,Float> getAverageByKey = (tuple) -> {
-	     Tuple2<Float, Float> val = tuple._2;
-	     Float total = val._1;
-	     Float count = val._2;
-	     Tuple2<String, Float> averagePair = new Tuple2<String, Float>(tuple._1, (float) (total / count));
-	     return averagePair;
-	  };
+	public static void showGreetings() {
+		String greetings =
+			"******************************************"
+		+ "\n*                                        *"
+		+ "\n* NCDC DATA - A HELPFUL TOOL 4 CIENTISTS *"
+		+ "\n*      EP2 - DSID			 *"
+		+ "\n*  	Feito por:                       *"
+		+ "\n*  Hector, Lucas, KW, Paulo e Fabiano    *"
+		+ "\n*                                        *"
+		+ "\n******************************************"
+		;
+		System.out.print(greetings);
+		
+		System.out.println();
+		System.out.print("---------------------------------");
+		System.out.println();
+	}
+	
+	public static void showOperations() {
+		String operations =
+			"******************************************"
+		+ "\n*                                        *"
+		+ "\n* 1- MEDIA *"
+		+ "\n* 2- MODA			 *"
+		+ "\n* 3- MEDIANA                       *"
+		+ "\n* 4- DESVIO PADRAO   *"
+		+ "\n* 5- METODO DOS MINIMOS QUADRADOS   *"
+		+ "\n*                                        *"
+		+ "\n******************************************"
+		;
+		System.out.print(operations);
+		
+		System.out.println();
+		System.out.print("---------------------------------");
+		System.out.println();
+	}
+	
+	public static void main(String[] args) {
+		
+		String USAF = "";
+		String WBAN = "";
+		String filename = "";
+		int operacao = Integer.MIN_VALUE;
+		int ano = Integer.MIN_VALUE;
+		
+		Scanner scanner = new Scanner(System.in);
+		
+		SparkConf sparkConf = new SparkConf().setMaster("local").setAppName("EP2");
+		JavaSparkContext sparkContext = new JavaSparkContext(sparkConf);
+		
+		//MOSTRA APRESENTAÇÃO INICIAL
+		showGreetings();
+		
+		System.out.println("Entre com o USAF ID: ");
+		USAF = scanner.next();
+		
+		System.out.println("Entre com o WBAN ID: ");
+		WBAN = scanner.next();
+		
+		System.out.println("Entre com o ano: ");
+		ano = scanner.nextInt();
+		
+		filename = Conexoes.retornaCSV(USAF, WBAN, ano, sparkContext);
+		
+		System.out.println("Qual operação deseja realizar?");
+		showOperations();
+		operacao = scanner.nextInt();
+		
+		switch (operacao) {
+		  case 1:
+		    System.out.println("MEDIA");
+		    Calculos.calculaMedia(filename, sparkContext);
+		    break;
+		  case 2:
+		    System.out.println("MODA");
+		    break;
+		  case 3:
+		    System.out.println("MEDIANA");
+		    break;
+		  case 4:
+		    System.out.println("DESVIO PADRAO");
+		    break;
+		  case 5:
+		    System.out.println("METODO DOS MINIMOS QUADRADOS");
+		    break;
+		} 
+		
+		
+	
+		//stop sc
+		sparkContext.stop();
+		sparkContext.close();
+	}
+	
+	
 	
 }
 	
