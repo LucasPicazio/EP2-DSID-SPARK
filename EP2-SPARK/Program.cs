@@ -42,19 +42,17 @@ namespace EP2_SPARK
                     Console.WriteLine("MEDIA");
                     Calculos.calculaMedia(filename,spark);
                     break;
-                case 2:
-                    Console.WriteLine("MODA");
-                    Calculos.calculaModa(filename, spark);
-                    break;
                 case 3:
-                    Console.WriteLine("MEDIANA");
-                    break;
-                case 4:
                     Console.WriteLine("DESVIO PADRAO");
                     Calculos.calculaDesvio(filename, spark);
                     break;
+                case 4:
+                    Console.WriteLine("Variancia");
+                    Calculos.calculaVariancia(filename, spark);
+                    break;
                 case 5:
                     Console.WriteLine("METODO DOS MINIMOS QUADRADOS");
+                    Calculos.calculaQuadradosMinimos(filename, spark);
                     break;
             }
 
